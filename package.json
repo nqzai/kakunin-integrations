@@ -1,0 +1,14 @@
+{
+  "name": "kakunin-integrations",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Framework integrations for the Kakunin AI agent compliance platform",
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "git+https://github.com/nqzai/kakunin-integrations.git" },
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  }
+}

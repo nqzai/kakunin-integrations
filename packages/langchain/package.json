@@ -1,0 +1,56 @@
+{
+  "name": "@kakunin/langchain",
+  "version": "0.2.0",
+  "description": "Kakunin compliance tools for LangChain JS/TS \u2014 verify agent certificates and scopes inside tools and chains",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "kakunin",
+    "langchain",
+    "compliance",
+    "ai-agents",
+    "x509",
+    "mica",
+    "eu-ai-act"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://kakunin.ai",
+  "peerDependencies": {
+    "@langchain/core": ">=0.1.0",
+    "@kakunin/sdk": ">=0.1.0",
+    "zod": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.3.0",
+    "@kakunin/sdk": "^0.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "zod": "^3.22.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "directory": "packages/langchain"
+  },
+  "bugs": {
+    "url": "https://github.com/nqzai/kakunin-integrations/issues"
+  }
+}

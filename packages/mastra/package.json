@@ -1,0 +1,55 @@
+{
+  "name": "@kakunin/mastra",
+  "version": "0.2.0",
+  "description": "Kakunin compliance integration for Mastra \u2014 X.509 certificate verification, scope checking, risk scoring, and EU AI Act audit trail for AI agents",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "kakunin",
+    "mastra",
+    "compliance",
+    "ai-agents",
+    "x509",
+    "mica",
+    "eu-ai-act",
+    "kyc"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://kakunin.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "directory": "packages/mastra"
+  },
+  "peerDependencies": {
+    "@mastra/core": ">=0.1.0",
+    "zod": ">=3.0.0"
+  },
+  "devDependencies": {
+    "@mastra/core": "^0.1.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "zod": "^3.22.0"
+  },
+  "bugs": {
+    "url": "https://github.com/nqzai/kakunin-integrations/issues"
+  }
+}
