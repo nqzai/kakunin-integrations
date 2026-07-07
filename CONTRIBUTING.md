@@ -1,0 +1,37 @@
+# Contributing
+
+Thanks for your interest in improving the Kakunin framework integrations.
+
+## Ground rules
+
+- **Solo-maintainer project (for now).** Best-effort support; triage target is one week. Small, focused PRs get reviewed fastest.
+- **Security issues:** never open a public issue — see [SECURITY.md](./SECURITY.md).
+- By contributing you agree that your contributions are licensed under Apache-2.0. A lightweight CLA check runs on your first PR.
+
+## Development
+
+This is an npm workspace — each integration lives under `packages/`.
+
+```bash
+npm ci                                   # install all workspaces
+npm test --workspaces --if-present
+npm run typecheck --workspaces --if-present
+npm run build --workspaces --if-present
+```
+
+## Pull requests
+
+1. Open an issue first for anything beyond a small fix — API surface changes need discussion.
+2. Add or update tests for any behavior change.
+3. Keep each package's public API backward compatible; breaking changes require a major-version discussion.
+4. CI must be green: build, tests, type-check.
+
+## What we're looking for
+
+- Bug fixes with reproduction tests
+- New framework integrations (add a package under `packages/`, following the layout of the existing ones)
+- Documentation improvements
+
+## What belongs elsewhere
+
+Features that touch the hosted platform (new API endpoints, compliance report formats, billing) are not implementable from this repository — open an issue to discuss and we'll route it.
