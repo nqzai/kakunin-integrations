@@ -6,6 +6,9 @@ on:
     tags:
       - '*@*'
 
+permissions:
+  contents: read
+
 jobs:
   publish:
     name: Publish to npm

@@ -1,5 +1,7 @@
 # Kakunin Integrations
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/nqzai/kakunin-integrations/badge)](https://scorecard.dev/viewer/?uri=github.com/nqzai/kakunin-integrations)
+
 Framework integrations for the [Kakunin](https://kakunin.ai) AI agent compliance platform — verify agent certificates, enforce scopes, and emit behavioral events from inside popular agent and web frameworks.
 
 Each package publishes independently to npm under the `@kakunin` scope.
