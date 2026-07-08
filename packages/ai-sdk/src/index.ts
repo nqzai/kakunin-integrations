@@ -27,7 +27,7 @@
  * @see https://kakunin.ai/docs/integrations/vercel-ai-sdk
  */
 
-import { tool } from 'ai';
+import { tool, type ToolSet } from 'ai';
 import { z } from 'zod';
 import Kakunin, { type ActionType } from '@kakunin/sdk';
 
@@ -55,7 +55,7 @@ export interface KakuninToolsConfig {
  * - `getBehaviorRiskScore` — current risk score + band
  * - `emitBehaviorEvent` — write to immutable EU AI Act audit trail
  */
-export function createKakuninTools(config: KakuninToolsConfig) {
+export function createKakuninTools(config: KakuninToolsConfig): ToolSet {
   const kkn = new Kakunin({
     apiKey: config.apiKey,
     ...(config.baseUrl !== undefined ? { baseUrl: config.baseUrl } : {}),
@@ -65,7 +65,7 @@ export function createKakuninTools(config: KakuninToolsConfig) {
     verifyAgentCertificate: tool({
       description:
         'Verify the X.509 certificate of an AI agent. Returns certificate status, active scopes, expiry, and revocation state. Use before trusting any agent-signed claim.',
-      parameters: z.object({
+      inputSchema: z.object({
         serial: z
           .string()
           .describe('Certificate serial number (e.g. c4f9-17a2-6b8e) to verify.'),
@@ -77,7 +77,7 @@ export function createKakuninTools(config: KakuninToolsConfig) {
     checkAgentScope: tool({
       description:
         'Check whether a specific action is permitted by the agent\'s active certificate scope. Returns allowed=true/false plus the full permitted scope list. Call this before any privileged operation (trade.execute, data.write, etc.).',
-      parameters: z.object({
+      inputSchema: z.object({
         agentId: z.string().describe('Kakunin agent ID whose scope to check.'),
         action: z
           .string()
@@ -99,7 +99,7 @@ export function createKakuninTools(config: KakuninToolsConfig) {
     getBehaviorRiskScore: tool({
       description:
         'Return the current behavioral risk score for an AI agent over the rolling 30-day window, plus its risk band (low/medium/high). Use before high-stakes operations.',
-      parameters: z.object({
+      inputSchema: z.object({
         agentId: z.string().describe('Kakunin agent ID to fetch the risk score for.'),
       }),
       execute: async ({ agentId }) => {
@@ -116,7 +116,7 @@ export function createKakuninTools(config: KakuninToolsConfig) {
     emitBehaviorEvent: tool({
       description:
         'Emit a behavioral event to Kakunin\'s immutable audit trail. Required for EU AI Act Article 12 compliance logging. Call after every significant agent action. Returns the event\'s risk band.',
-      parameters: z.object({
+      inputSchema: z.object({
         agentId: z.string().describe('Kakunin agent ID performing the action.'),
         actionType: z
           .enum([
@@ -133,7 +133,7 @@ export function createKakuninTools(config: KakuninToolsConfig) {
           ])
           .describe('Canonical Kakunin event type.'),
         details: z
-          .record(z.unknown())
+          .record(z.string(), z.unknown())
           .optional()
           .describe('Optional key-value pairs stored alongside the event.'),
       }),

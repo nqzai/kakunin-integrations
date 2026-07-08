@@ -140,7 +140,7 @@ export class KakuninIntegration {
             ])
             .describe('Canonical Kakunin event type.'),
           details: z
-            .record(z.unknown())
+            .record(z.string(), z.unknown())
             .optional()
             .describe('Optional key-value pairs stored alongside the event.'),
         }),

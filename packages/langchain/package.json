@@ -1,7 +1,7 @@
 {
   "name": "@kakunin/langchain",
-  "version": "0.2.1",
-  "description": "Kakunin compliance tools for LangChain JS/TS \u2014 verify agent certificates and scopes inside tools and chains",
+  "version": "0.2.2",
+  "description": "Kakunin compliance tools for LangChain JS/TS — verify agent certificates and scopes inside tools and chains",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "@langchain/core": ">=0.1.0",
-    "zod": ">=3.0.0"
+    "zod": ">=3.25 || ^4.0"
   },
   "devDependencies": {
     "@langchain/core": "^0.3.0",
@@ -45,7 +45,7 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.10",
-    "zod": "^3.22.0"
+    "zod": "^4.4.3"
   },
   "repository": {
     "type": "git",
