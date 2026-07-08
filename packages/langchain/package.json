@@ -45,7 +45,7 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.10",
-    "zod": "^3.22.0"
+    "zod": "^4.4.3"
   },
   "repository": {
     "type": "git",
