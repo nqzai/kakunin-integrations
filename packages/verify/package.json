@@ -1,0 +1,38 @@
+{
+  "name": "@kakunin/verify",
+  "version": "0.1.0",
+  "description": "Certificate-enforcement middleware for Kakunin AI agents — a thin re-export of @kakunin/sdk/verify so `npm install @kakunin/verify` works standalone.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "keywords": ["kakunin", "verify", "certificate", "enforcement", "ai-agents", "x509", "compliance"],
+  "license": "Apache-2.0",
+  "homepage": "https://kakunin.ai",
+  "dependencies": {
+    "@kakunin/sdk": "^0.2.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.1.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "directory": "packages/verify"
+  },
+  "bugs": { "url": "https://github.com/nqzai/kakunin-integrations/issues" }
+}
