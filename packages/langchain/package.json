@@ -1,6 +1,6 @@
 {
   "name": "@kakunin/langchain",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Kakunin compliance tools for LangChain JS/TS \u2014 verify agent certificates and scopes inside tools and chains",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -32,9 +32,11 @@
   ],
   "license": "Apache-2.0",
   "homepage": "https://kakunin.ai",
+  "dependencies": {
+    "@kakunin/sdk": "^0.2.0"
+  },
   "peerDependencies": {
     "@langchain/core": ">=0.1.0",
-    "@kakunin/sdk": ">=0.1.0",
     "zod": ">=3.0.0"
   },
   "devDependencies": {
