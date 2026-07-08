@@ -3,7 +3,10 @@
  *
  * Drop-in tools for `generateText()` / `streamText()` that let AI models
  * verify agent certificates, check action scope, read behavioral risk scores,
- * and emit EU AI Act-compliant audit events — all without a separate SDK dep.
+ * and emit EU AI Act-compliant audit events.
+ *
+ * Backed by the official [`@kakunin/sdk`](https://www.npmjs.com/package/@kakunin/sdk)
+ * client — one source of truth for API calls, auth, retries, and typing.
  *
  * Usage:
  *   import { createKakuninTools } from '@kakunin/ai-sdk';
@@ -26,9 +29,7 @@
 
 import { tool } from 'ai';
 import { z } from 'zod';
-
-const DEFAULT_BASE = 'https://api.kakunin.ai/v1';
-const AUTHED_BASE = 'https://www.kakunin.ai/api/v1';
+import Kakunin, { type ActionType } from '@kakunin/sdk';
 
 export interface KakuninToolsConfig {
   /** Kakunin API key (`kak_live_...` or `kak_test_...`). */
@@ -38,40 +39,8 @@ export interface KakuninToolsConfig {
    * Can be overridden by passing `agentId` in each tool call.
    */
   agentId?: string;
-  /** Override the API base URL (defaults to production). */
+  /** Override the API base URL (defaults to the SDK's production base). */
   baseUrl?: string;
-}
-
-// ── internal fetch helpers ──────────────────────────────────────────────────
-
-async function apiFetch(
-  path: string,
-  apiKey: string,
-  baseUrl: string,
-  options?: RequestInit,
-): Promise<unknown> {
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      ...(options?.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const err = await res.text().catch(() => res.statusText);
-    throw new Error(`Kakunin API error ${res.status}: ${err}`);
-  }
-  return res.json();
-}
-
-async function publicFetch(path: string, publicBase: string): Promise<unknown> {
-  const res = await fetch(`${publicBase}${path}`);
-  if (!res.ok) {
-    const err = await res.text().catch(() => res.statusText);
-    throw new Error(`Kakunin API error ${res.status}: ${err}`);
-  }
-  return res.json();
 }
 
 // ── tool factory ────────────────────────────────────────────────────────────
@@ -87,84 +56,68 @@ async function publicFetch(path: string, publicBase: string): Promise<unknown> {
  * - `emitBehaviorEvent` — write to immutable EU AI Act audit trail
  */
 export function createKakuninTools(config: KakuninToolsConfig) {
-  const base = (config.baseUrl ?? AUTHED_BASE).replace(/\/$/, '');
-  const { apiKey } = config;
+  const kkn = new Kakunin({
+    apiKey: config.apiKey,
+    ...(config.baseUrl !== undefined ? { baseUrl: config.baseUrl } : {}),
+  });
 
   return {
     verifyAgentCertificate: tool({
       description:
         'Verify the X.509 certificate of an AI agent. Returns certificate status, active scopes, expiry, and revocation state. Use before trusting any agent-signed claim.',
       parameters: z.object({
-        agentId: z
+        serial: z
           .string()
-          .describe('Kakunin agent ID (e.g. agt-abc123) or certificate serial number.'),
+          .describe('Certificate serial number (e.g. c4f9-17a2-6b8e) to verify.'),
       }),
-      execute: async ({ agentId }) => {
-        // Public verify endpoint — no auth, <500ms p99
-        return publicFetch(`/verify/${agentId}`, DEFAULT_BASE);
-      },
+      // Public verify endpoint — no auth, <500ms p99
+      execute: async ({ serial }) => kkn.verify.cert(serial),
     }),
 
     checkAgentScope: tool({
       description:
         'Check whether a specific action is permitted by the agent\'s active certificate scope. Returns allowed=true/false plus the full permitted scope list. Call this before any privileged operation (trade.execute, data.write, etc.).',
       parameters: z.object({
-        agentId: z
-          .string()
-          .describe('Kakunin agent ID whose scope to check.'),
+        agentId: z.string().describe('Kakunin agent ID whose scope to check.'),
         action: z
           .string()
-          .describe(
-            'The action string to verify, e.g. "trade.execute", "data.write", "api_call".',
-          ),
+          .describe('The action string to verify, e.g. "trade.execute", "data.write", "api_call".'),
       }),
       execute: async ({ agentId, action }) => {
-        const res = (await apiFetch(`/agents/${agentId}`, apiKey, base)) as { data: Record<string, unknown> };
-        const agent = res.data ?? {};
-        const meta = (agent['metadata'] as Record<string, unknown> | null) ?? {};
-        const permitted = (meta['permitted_actions'] as string[] | undefined) ?? [];
+        const agent = await kkn.agents.get(agentId);
+        const permitted = (agent.metadata['permitted_actions'] as string[] | undefined) ?? [];
         return {
           agentId,
           action,
           allowed: permitted.includes(action),
           permittedScopes: permitted,
-          agentStatus: agent['status'] ?? 'unknown',
+          agentStatus: agent.status,
         };
       },
     }),
 
     getBehaviorRiskScore: tool({
       description:
-        'Return the current behavioral risk score for an AI agent. Bands: low (<0.3), medium (>=0.3), high (>=0.75), critical (>=0.85 triggers auto-revocation). Use before high-stakes operations.',
+        'Return the current behavioral risk score for an AI agent over the rolling 30-day window, plus its risk band (low/medium/high). Use before high-stakes operations.',
       parameters: z.object({
-        agentId: z
-          .string()
-          .describe('Kakunin agent ID to fetch the risk score for.'),
+        agentId: z.string().describe('Kakunin agent ID to fetch the risk score for.'),
       }),
       execute: async ({ agentId }) => {
-        const res = (await apiFetch(`/agents/${agentId}`, apiKey, base)) as { data: Record<string, unknown> };
-        const agent = res.data ?? {};
-        const meta = (agent['metadata'] as Record<string, unknown> | null) ?? {};
-        const score = (meta['risk_score'] as number | undefined) ?? 0;
-        const band =
-          score >= 0.85
-            ? 'critical'
-            : score >= 0.75
-              ? 'high'
-              : score >= 0.3
-                ? 'medium'
-                : 'low';
-        return { agentId, score, band };
+        const risk = await kkn.agents.getRisk(agentId);
+        return {
+          agentId,
+          score: risk.avg_score,
+          band: risk.dominant_band,
+          highRiskEventCount: risk.high_risk_event_count,
+        };
       },
     }),
 
     emitBehaviorEvent: tool({
       description:
-        'Emit a behavioral event to Kakunin\'s immutable audit trail. Required for EU AI Act Article 12 compliance logging. Call after every significant agent action. Fire-and-forget — does not block.',
+        'Emit a behavioral event to Kakunin\'s immutable audit trail. Required for EU AI Act Article 12 compliance logging. Call after every significant agent action. Returns the event\'s risk band.',
       parameters: z.object({
-        agentId: z
-          .string()
-          .describe('Kakunin agent ID performing the action.'),
+        agentId: z.string().describe('Kakunin agent ID performing the action.'),
         actionType: z
           .enum([
             'api_call',
@@ -185,19 +138,16 @@ export function createKakuninTools(config: KakuninToolsConfig) {
           .describe('Optional key-value pairs stored alongside the event.'),
       }),
       execute: async ({ agentId, actionType, details }) => {
-        const result = (await apiFetch(
-          '/events',
-          apiKey,
-          base,
-          {
-            method: 'POST',
-            body: JSON.stringify({ agent_id: agentId, action_type: actionType, details: details ?? {} }),
-          },
-        )) as Record<string, unknown>;
+        const result = await kkn.events.ingest({
+          agentId,
+          actionType: actionType as ActionType,
+          ...(details !== undefined ? { details } : {}),
+        });
         return {
-          eventId: result['id'],
+          eventId: result.event_id,
           agentId,
           actionType,
+          riskBand: result.risk_band,
         };
       },
     }),
