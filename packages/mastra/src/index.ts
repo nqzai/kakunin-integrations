@@ -5,6 +5,9 @@
  * Exposes four tools: verify certificate, check scope, get risk score,
  * emit behavioral event.
  *
+ * Backed by the official [`@kakunin/sdk`](https://www.npmjs.com/package/@kakunin/sdk)
+ * client — one source of truth for API calls, auth, retries, and typing.
+ *
  * Usage:
  *   import { KakuninIntegration } from '@kakunin/mastra';
  *
@@ -25,38 +28,13 @@
  */
 
 import { z } from 'zod';
-
-const DEFAULT_BASE = 'https://api.kakunin.ai/v1';
-const AUTHED_BASE = 'https://www.kakunin.ai/api/v1';
+import Kakunin, { type ActionType } from '@kakunin/sdk';
 
 export interface KakuninIntegrationConfig {
   /** Kakunin API key (`kak_live_...` or `kak_test_...`). */
   apiKey: string;
-  /** Override the API base URL (defaults to production). */
+  /** Override the API base URL (defaults to the SDK's production base). */
   baseUrl?: string;
-}
-
-// ── internal fetch helpers ──────────────────────────────────────────────────
-
-async function apiFetch(
-  path: string,
-  apiKey: string,
-  base: string,
-  options?: RequestInit,
-): Promise<unknown> {
-  const res = await fetch(`${base}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      ...(options?.headers ?? {}),
-    },
-  });
-  if (!res.ok) {
-    const err = await res.text().catch(() => res.statusText);
-    throw new Error(`Kakunin API error ${res.status}: ${err}`);
-  }
-  return res.json();
 }
 
 // ── KakuninIntegration ──────────────────────────────────────────────────────
@@ -68,12 +46,13 @@ async function apiFetch(
  * to receive tool definitions compatible with Mastra's Agent and Workflow APIs.
  */
 export class KakuninIntegration {
-  private readonly apiKey: string;
-  private readonly base: string;
+  private readonly kkn: Kakunin;
 
   constructor(config: KakuninIntegrationConfig) {
-    this.apiKey = config.apiKey;
-    this.base = (config.baseUrl ?? AUTHED_BASE).replace(/\/$/, '');
+    this.kkn = new Kakunin({
+      apiKey: config.apiKey,
+      ...(config.baseUrl !== undefined ? { baseUrl: config.baseUrl } : {}),
+    });
   }
 
   /**
@@ -83,24 +62,21 @@ export class KakuninIntegration {
    * spread into your workflow step tools.
    */
   getTools() {
-    const { apiKey, base } = this;
+    const kkn = this.kkn;
 
     return {
       verifyAgentCertificate: {
         description:
           'Verify the X.509 certificate of an AI agent. Returns certificate status, active scopes, expiry, and revocation state. Use before trusting any agent-signed claim.',
         inputSchema: z.object({
-          agentId: z
+          serial: z
             .string()
-            .describe('Kakunin agent ID (e.g. agt-abc123) or certificate serial number.'),
+            .describe('Certificate serial number (e.g. c4f9-17a2-6b8e) to verify.'),
         }),
         outputSchema: z.unknown(),
-        execute: async ({ context }: { context: { agentId: string } }) => {
+        execute: async ({ context }: { context: { serial: string } }) =>
           // Public verify endpoint — no auth required, <500ms p99
-          const res = await fetch(`${DEFAULT_BASE}/verify/${context.agentId}`);
-          if (!res.ok) throw new Error(`Kakunin verify error ${res.status}`);
-          return res.json();
-        },
+          kkn.verify.cert(context.serial),
       },
 
       checkAgentScope: {
@@ -114,41 +90,33 @@ export class KakuninIntegration {
         }),
         outputSchema: z.unknown(),
         execute: async ({ context }: { context: { agentId: string; action: string } }) => {
-          const res = (await apiFetch(`/agents/${context.agentId}`, apiKey, base)) as { data: Record<string, unknown> };
-          const agent = res.data ?? {};
-          const meta = (agent['metadata'] as Record<string, unknown> | null) ?? {};
-          const permitted = (meta['permitted_actions'] as string[] | undefined) ?? [];
+          const agent = await kkn.agents.get(context.agentId);
+          const permitted = (agent.metadata['permitted_actions'] as string[] | undefined) ?? [];
           return {
             agentId: context.agentId,
             action: context.action,
             allowed: permitted.includes(context.action),
             permittedScopes: permitted,
-            agentStatus: agent['status'] ?? 'unknown',
+            agentStatus: agent.status,
           };
         },
       },
 
       getBehaviorRiskScore: {
         description:
-          'Return the current behavioral risk score for an AI agent. Bands: low (<0.3), medium (>=0.3), high (>=0.75), critical (>=0.85 triggers auto-revocation). Use before high-stakes operations.',
+          'Return the current behavioral risk score for an AI agent over the rolling 30-day window, plus its risk band (low/medium/high). Use before high-stakes operations.',
         inputSchema: z.object({
           agentId: z.string().describe('Kakunin agent ID to fetch the risk score for.'),
         }),
         outputSchema: z.unknown(),
         execute: async ({ context }: { context: { agentId: string } }) => {
-          const res = (await apiFetch(`/agents/${context.agentId}`, apiKey, base)) as { data: Record<string, unknown> };
-          const agent = res.data ?? {};
-          const meta = (agent['metadata'] as Record<string, unknown> | null) ?? {};
-          const score = (meta['risk_score'] as number | undefined) ?? 0;
-          const band =
-            score >= 0.85
-              ? 'critical'
-              : score >= 0.75
-                ? 'high'
-                : score >= 0.3
-                  ? 'medium'
-                  : 'low';
-          return { agentId: context.agentId, score, band };
+          const risk = await kkn.agents.getRisk(context.agentId);
+          return {
+            agentId: context.agentId,
+            score: risk.avg_score,
+            band: risk.dominant_band,
+            highRiskEventCount: risk.high_risk_event_count,
+          };
         },
       },
 
@@ -182,18 +150,16 @@ export class KakuninIntegration {
         }: {
           context: { agentId: string; actionType: string; details?: Record<string, unknown> };
         }) => {
-          const result = (await apiFetch('/events', apiKey, base, {
-            method: 'POST',
-            body: JSON.stringify({
-              agent_id: context.agentId,
-              action_type: context.actionType,
-              details: context.details ?? {},
-            }),
-          })) as Record<string, unknown>;
+          const result = await kkn.events.ingest({
+            agentId: context.agentId,
+            actionType: context.actionType as ActionType,
+            ...(context.details !== undefined ? { details: context.details } : {}),
+          });
           return {
-            eventId: result['id'],
+            eventId: result.event_id,
             agentId: context.agentId,
             actionType: context.actionType,
+            riskBand: result.risk_band,
           };
         },
       },
