@@ -1,4 +1,4 @@
-# Kakunin Integrations
+# Kakunin Integrations — AI agent identity & compliance for LangChain, Mastra, Vercel AI SDK & Express
 
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/nqzai/kakunin-integrations/badge)](https://scorecard.dev/viewer/?uri=github.com/nqzai/kakunin-integrations)
 
