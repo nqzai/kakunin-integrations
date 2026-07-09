@@ -49,10 +49,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "url": "git+https://github.com/kakunin-ai/kakunin-integrations.git",
     "directory": "packages/langchain"
   },
   "bugs": {
-    "url": "https://github.com/nqzai/kakunin-integrations/issues"
+    "url": "https://github.com/kakunin-ai/kakunin-integrations/issues"
   }
 }

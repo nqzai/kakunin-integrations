@@ -31,8 +31,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "url": "git+https://github.com/kakunin-ai/kakunin-integrations.git",
     "directory": "packages/verify"
   },
-  "bugs": { "url": "https://github.com/nqzai/kakunin-integrations/issues" }
+  "bugs": { "url": "https://github.com/kakunin-ai/kakunin-integrations/issues" }
 }

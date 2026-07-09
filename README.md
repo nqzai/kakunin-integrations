@@ -1,6 +1,6 @@
 # Kakunin Integrations — AI agent identity & compliance for LangChain, Mastra, Vercel AI SDK & Express
 
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/nqzai/kakunin-integrations/badge)](https://scorecard.dev/viewer/?uri=github.com/nqzai/kakunin-integrations)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/kakunin-ai/kakunin-integrations/badge)](https://scorecard.dev/viewer/?uri=github.com/kakunin-ai/kakunin-integrations)
 
 Framework integrations for the [Kakunin](https://kakunin.ai) AI agent compliance platform — verify agent certificates, enforce scopes, and emit behavioral events from inside popular agent and web frameworks.
 
@@ -13,7 +13,7 @@ Each package publishes independently to npm under the `@kakunin` scope.
 | [`@kakunin/mastra`](packages/mastra) | Mastra | `npm i @kakunin/mastra` |
 | [`@kakunin/ai-sdk`](packages/ai-sdk) | Vercel AI SDK | `npm i @kakunin/ai-sdk` |
 
-For the core SDK and certificate-enforcement middleware, see [`@kakunin/sdk`](https://github.com/nqzai/kakunin-sdk-typescript).
+For the core SDK and certificate-enforcement middleware, see [`@kakunin/sdk`](https://github.com/kakunin-ai/kakunin-sdk-typescript).
 
 ## Development
 

@@ -2,7 +2,7 @@
 
 Certificate-enforcement middleware for services that receive traffic from
 Kakunin-certified AI agents. This package is a thin re-export of
-[`@kakunin/sdk/verify`](https://github.com/nqzai/kakunin-sdk-typescript) —
+[`@kakunin/sdk/verify`](https://github.com/kakunin-ai/kakunin-sdk-typescript) —
 published standalone so `npm install @kakunin/verify` works on its own.
 
 ```bash

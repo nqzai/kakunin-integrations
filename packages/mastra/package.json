@@ -35,7 +35,7 @@
   "homepage": "https://kakunin.ai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nqzai/kakunin-integrations.git",
+    "url": "git+https://github.com/kakunin-ai/kakunin-integrations.git",
     "directory": "packages/mastra"
   },
   "dependencies": {
@@ -53,6 +53,6 @@
     "zod": "^4.4.3"
   },
   "bugs": {
-    "url": "https://github.com/nqzai/kakunin-integrations/issues"
+    "url": "https://github.com/kakunin-ai/kakunin-integrations/issues"
   }
 }
