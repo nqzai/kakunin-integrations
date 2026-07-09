@@ -46,7 +46,7 @@
     "zod": ">=3.25 || ^4.0"
   },
   "devDependencies": {
-    "@mastra/core": "^0.1.0",
+    "@mastra/core": "^1.50.1",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^4.1.10",
